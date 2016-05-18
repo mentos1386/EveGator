@@ -1,5 +1,10 @@
 package com.mentos1386.evegator;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.mentos1386.evegator.Objects.AuthObject;
+import com.sun.deploy.uitoolkit.ui.LoggerConsole;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
@@ -18,15 +23,18 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Logger;
 
 public class Authentication implements com.mentos1386.evegator.Interfaces.Authentication {
 
-    private final String OAuthUrl = "https://login.eveonline.com/oauth/authorize";
-    private final String TokenUrl = "https://login-tq.eveonline.com/oauth/token/";
-    private final String redirectUrl = "http://localhost/729971297/";
-    private final String client = "8e763e5cb9234108bc921eaec291c020";
-    private final String Secret = "Pn5O9c3MViiu6DOUKpvTfu5zN17LRuIXSZao4jf5";
-    private final String[] scopes = {
+    private static String OAUTH_URL = "https://login.eveonline.com/oauth/authorize";
+    private static String TOKEN_URL = "https://login-tq.eveonline.com/oauth/token/";
+    private static String REDIRECT_URL = "http://localhost/729971297/";
+    private static String CLIENT_KEY = "8e763e5cb9234108bc921eaec291c020";
+    private static String CLIENT_SECRET = "Pn5O9c3MViiu6DOUKpvTfu5zN17LRuIXSZao4jf5";
+    private static String STATE;
+    private static AuthObject AUTH_OBECT;
+    private static String[] SCOPES = {
             // Navigation
             "characterNavigationWrite",
             // Location
@@ -36,13 +44,16 @@ public class Authentication implements com.mentos1386.evegator.Interfaces.Authen
             // Character
             "characterClonesRead"
     };
-    private String token = "";
-    private String state = "";
 
-    public void authenticate(Stage stage) {
-        final String url = this.OAuthUrl + this.getQuery();
+    // Create browser window with Authentication
+    // Monitor for redirection on REDIRECT_URL and catch data send to it
+    public static AuthObject authenticate() {
+
+        Stage window = new Stage();
+
+        final String url = OAUTH_URL + getQuery();
+
         BorderPane borderPane = new BorderPane();
-
         WebView browser = new WebView();
         WebEngine webEngine = browser.getEngine();
 
@@ -54,7 +65,8 @@ public class Authentication implements com.mentos1386.evegator.Interfaces.Authen
                 if (event.getSource() instanceof WebEngine) {
                     WebEngine we = (WebEngine) event.getSource();
                     String location = we.getLocation();
-                    if (location.startsWith(redirectUrl) && location.contains("code") && token.isEmpty()) {
+                    if (location.startsWith(REDIRECT_URL) && location.contains("code") && AUTH_OBECT == null) {
+                        // If we are redirected to REDIRECT_URL we get contents, and send it to verify() to get access token
                         try {
                             URL url = new URL(location);
                             String[] params = url.getQuery().split("&");
@@ -67,7 +79,7 @@ public class Authentication implements com.mentos1386.evegator.Interfaces.Authen
                             String code = map.get("code");
                             // We have code so we continue the flow
                             verify(code);
-                            stage.close();
+                            window.close();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -77,21 +89,24 @@ public class Authentication implements com.mentos1386.evegator.Interfaces.Authen
         });
 
         // create scene
-        stage.setTitle("Authentication");
+        window.setTitle("Authentication");
         Scene scene = new Scene(borderPane, 750, 500);
-        stage.setScene(scene);
-        stage.show();
+        window.setScene(scene);
+        window.showAndWait();
+
+        return AUTH_OBECT;
     }
 
-    private void verify(String code) throws IOException {
-        URL obj = new URL(this.TokenUrl);
+    // Get Access Token from received code
+    private static void verify(String code) throws IOException {
+        URL obj = new URL(TOKEN_URL);
         HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 
         String urlParameters = "grant_type=authorization_code&code=" + code;
 
-        //add reuqest header
+        //add request header
         con.setRequestMethod("POST");
-        con.setRequestProperty("Authorization", "Basic " + new String(Base64.getEncoder().encode((this.client + ":" + this.Secret).getBytes())));
+        con.setRequestProperty("Authorization", "Basic " + new String(Base64.getEncoder().encode((CLIENT_KEY + ":" + CLIENT_SECRET).getBytes())));
         con.setRequestProperty("Content-Length", String.valueOf(urlParameters.length()));
         con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
@@ -101,41 +116,48 @@ public class Authentication implements com.mentos1386.evegator.Interfaces.Authen
         DataOutputStream output = new DataOutputStream(con.getOutputStream());
         output.writeBytes(urlParameters);
         output.close();
-
-
         DataInputStream input = new DataInputStream(con.getInputStream());
-
+        String response = "";
         for (int c = input.read(); c != -1; c = input.read())
-            System.out.print((char) c);
+            response += (char) c;
         input.close();
 
-        System.out.println("Resp Code:" + con.getResponseCode());
-        System.out.println("Resp Message:" + con.getResponseMessage());
+        Gson g = new Gson();
+        JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+
+        // Get required fields
+        String accessToken = jsonObject.get("access_token").getAsString();
+        String refreshToken = jsonObject.get("refresh_token").getAsString();
+
+        // Add expiration time
+        long currentTime = System.currentTimeMillis() / 1000;
+        long expiresIn = jsonObject.get("expires_in").getAsLong() + currentTime;
+
+        // Create new AuthObject with all required fields
+        AUTH_OBECT = new AuthObject(accessToken, refreshToken, expiresIn);
+
 
     }
 
-    private String getQuery() {
+    // Create query to be used when creating Authentication request
+    private static String getQuery() {
         String scope = "";
-        this.generateState();
+        generateState();
 
-        for (String s : this.scopes) {
+        for (String s : SCOPES) {
             scope += "+" + s;
         }
 
-        return "?response_type=code&redirect_uri=" + this.redirectUrl +
-                "&client_id=" + this.client +
+        return "?response_type=code&redirect_uri=" + REDIRECT_URL +
+                "&client_id=" + CLIENT_KEY +
                 "&scope=" + scope +
-                "&state=" + this.state;
+                "&STATE=" + STATE;
     }
 
-    private void generateState() {
+    // State is generated to be used when sending Authentication request
+    private static void generateState() {
         byte[] array = new byte[7]; // length is bounded by 7
         new Random().nextBytes(array);
-        this.state = new String(array, Charset.forName("UTF-8"));
-    }
-
-    public boolean isAuthenticated() {
-
-        return !this.token.isEmpty();
+        STATE = new String(array, Charset.forName("UTF-8"));
     }
 }
