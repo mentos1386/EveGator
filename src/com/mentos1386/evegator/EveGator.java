@@ -1,6 +1,5 @@
 package com.mentos1386.evegator;
 
-
 import com.google.gson.JsonObject;
 import com.mentos1386.evegator.Objects.AuthObject;
 import javafx.application.Application;
