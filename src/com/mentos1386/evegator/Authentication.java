@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mentos1386.evegator.Objects.AuthObject;
-import com.sun.deploy.uitoolkit.ui.LoggerConsole;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
@@ -23,12 +22,12 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.logging.Logger;
 
-public class Authentication implements com.mentos1386.evegator.Interfaces.Authentication {
+public class Authentication {
 
     private static String OAUTH_URL = "https://login.eveonline.com/oauth/authorize";
     private static String TOKEN_URL = "https://login-tq.eveonline.com/oauth/token/";
+    private static String OWNER_DETAILS_URL = "https://login.eveonline.com/oauth/verify";
     private static String REDIRECT_URL = "http://localhost/729971297/";
     private static String CLIENT_KEY = "8e763e5cb9234108bc921eaec291c020";
     private static String CLIENT_SECRET = "Pn5O9c3MViiu6DOUKpvTfu5zN17LRuIXSZao4jf5";
@@ -117,6 +116,27 @@ public class Authentication implements com.mentos1386.evegator.Interfaces.Authen
         output.writeBytes(urlParameters);
         output.close();
         DataInputStream input = new DataInputStream(con.getInputStream());
+
+        generateAuthObject(input);
+    }
+
+    // Create query to be used when creating Authentication request
+    private static String getQuery() {
+        String scope = "";
+        generateState();
+
+        for (String s : SCOPES) {
+            scope += "+" + s;
+        }
+
+        return "?response_type=code&redirect_uri=" + REDIRECT_URL +
+                "&client_id=" + CLIENT_KEY +
+                "&scope=" + scope +
+                "&STATE=" + STATE;
+    }
+
+    private static void generateAuthObject(DataInputStream input) throws IOException {
+
         String response = "";
         for (int c = input.read(); c != -1; c = input.read())
             response += (char) c;
@@ -133,25 +153,34 @@ public class Authentication implements com.mentos1386.evegator.Interfaces.Authen
         long currentTime = System.currentTimeMillis() / 1000;
         long expiresIn = jsonObject.get("expires_in").getAsLong() + currentTime;
 
+        // Get owner details (ID)
+        String owner = getOwnerDetails(accessToken);
+
         // Create new AuthObject with all required fields
-        AUTH_OBECT = new AuthObject(accessToken, refreshToken, expiresIn);
-
-
+        AUTH_OBECT = new AuthObject(accessToken, refreshToken, expiresIn, owner);
     }
 
-    // Create query to be used when creating Authentication request
-    private static String getQuery() {
-        String scope = "";
-        generateState();
+    private static String getOwnerDetails(String access_token) throws IOException{
 
-        for (String s : SCOPES) {
-            scope += "+" + s;
-        }
+        URL obj = new URL(OWNER_DETAILS_URL);
+        HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 
-        return "?response_type=code&redirect_uri=" + REDIRECT_URL +
-                "&client_id=" + CLIENT_KEY +
-                "&scope=" + scope +
-                "&STATE=" + STATE;
+        con.setRequestProperty("Authorization", "Bearer " + access_token);
+        con.setDoOutput(true);
+        con.setDoInput(true);
+        DataInputStream input = new DataInputStream(con.getInputStream());
+
+        String response = "";
+        for (int c = input.read(); c != -1; c = input.read())
+            response += (char) c;
+        input.close();
+
+        Gson g = new Gson();
+        JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+
+        // Return user id
+        return jsonObject.get("CharacterID").getAsString();
+
     }
 
     // State is generated to be used when sending Authentication request
