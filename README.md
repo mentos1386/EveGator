@@ -1,4 +1,4 @@
-# EveGator
+# EveGator [![Build Status](https://travis-ci.org/mentos1386/EveGator.svg?branch=master)](https://travis-ci.org/mentos1386/EveGator)
 
 Helper app for game Eve Online. It will allow to use advanced navigation/waypoint creation. With data gathered  from CREST and other sources it will be able to better predict where to transport your goods safer or where to create gate camp. 
 
