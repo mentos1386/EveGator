@@ -1,9 +1,9 @@
-package com.mentos1386.evegator;
+package com.mentos1386.evegator.Controllers;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mentos1386.evegator.Objects.AuthObject;
+import com.mentos1386.evegator.Models.AuthObject;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-public class Authentication {
+public class AuthController {
 
     private static String OAUTH_URL = "https://login.eveonline.com/oauth/authorize";
     private static String TOKEN_URL = "https://login-tq.eveonline.com/oauth/token/";
@@ -46,7 +46,7 @@ public class Authentication {
 
     // Create browser window with Authentication
     // Monitor for redirection on REDIRECT_URL and catch data send to it
-    public static AuthObject authenticate() {
+    public static void authenticate() {
 
         Stage window = new Stage();
 
@@ -59,30 +59,26 @@ public class Authentication {
         webEngine.load(url);
         borderPane.setCenter(browser);
 
-        webEngine.setOnStatusChanged(new EventHandler<WebEvent<String>>() {
-            public void handle(WebEvent<String> event) {
-                if (event.getSource() instanceof WebEngine) {
-                    WebEngine we = (WebEngine) event.getSource();
-                    String location = we.getLocation();
-                    if (location.startsWith(REDIRECT_URL) && location.contains("code") && AUTH_OBECT == null) {
-                        // If we are redirected to REDIRECT_URL we get contents, and send it to verify() to get access token
-                        try {
-                            URL url = new URL(location);
-                            String[] params = url.getQuery().split("&");
-                            Map<String, String> map = new HashMap<String, String>();
-                            for (String param : params) {
-                                String name = param.split("=")[0];
-                                String value = param.split("=")[1];
-                                map.put(name, value);
-                            }
-                            String code = map.get("code");
-                            // We have code so we continue the flow
-                            verify(code);
-                            window.close();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+        webEngine.setOnStatusChanged(event -> {
+            if (event.getSource() instanceof WebEngine) {
+                WebEngine we = (WebEngine) event.getSource();
+                String location = we.getLocation();
+                // If we are redirected to REDIRECT_URL we get contents, and send it to verify() to get access token
+                if (location.startsWith(REDIRECT_URL) && location.contains("code") && AUTH_OBECT == null) try {
+                    URL url1 = new URL(location);
+                    String[] params = url1.getQuery().split("&");
+                    Map<String, String> map = new HashMap<>();
+                    for (String param : params) {
+                        String name = param.split("=")[0];
+                        String value = param.split("=")[1];
+                        map.put(name, value);
                     }
+                    String code = map.get("code");
+                    // We have code so we continue the flow
+                    verify(code);
+                    window.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -92,8 +88,6 @@ public class Authentication {
         Scene scene = new Scene(borderPane, 750, 500);
         window.setScene(scene);
         window.showAndWait();
-
-        return AUTH_OBECT;
     }
 
     // Get Access Token from received code
@@ -160,7 +154,7 @@ public class Authentication {
         AUTH_OBECT = new AuthObject(accessToken, refreshToken, expiresIn, owner);
     }
 
-    private static String getOwnerDetails(String access_token) throws IOException{
+    private static String getOwnerDetails(String access_token) throws IOException {
 
         URL obj = new URL(OWNER_DETAILS_URL);
         HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
@@ -181,6 +175,10 @@ public class Authentication {
         // Return user id
         return jsonObject.get("CharacterID").getAsString();
 
+    }
+
+    public static AuthObject getAuth() {
+        return AUTH_OBECT;
     }
 
     // State is generated to be used when sending Authentication request

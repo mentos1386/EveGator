@@ -1,4 +1,4 @@
-package com.mentos1386.evegator.Objects;
+package com.mentos1386.evegator.Models;
 
 public class AuthObject {
 
