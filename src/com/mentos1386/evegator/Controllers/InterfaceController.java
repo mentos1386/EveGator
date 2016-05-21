@@ -1,7 +1,6 @@
 package com.mentos1386.evegator.Controllers;
 
 import com.mentos1386.evegator.Controllers.DataThreads.Constellation;
-import com.mentos1386.evegator.Controllers.DataThreads.DataThread;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
 import com.mentos1386.evegator.Views.LoadingData;
 import javafx.application.Application;

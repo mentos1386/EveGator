@@ -73,10 +73,8 @@ public class SQLiteController {
         String solarSystems = "CREATE TABLE solarSystem " +
                 "(id INT PRIMARY KEY NOT NULL," +
                 " constellation_id INT," +
-                " sovereignty INT," +
                 " name VARCHAR(20) NOT NULL," +
-                " securitystatus REAL NOT NULL," +
-                " securityclass VARCHAR(20) NOT NULL," +
+                " securitystatus REAL NOT NULL ," +
                 " x REAL NOT NULL ," +
                 " y REAL NOT NULL ," +
                 " z REAL NOT NULL ," +
@@ -95,11 +93,11 @@ public class SQLiteController {
                 "(id INT PRIMARY KEY NOT NULL ," +
                 " solarsystem_id INT NOT NULL ," +
                 " name VARCHAR(20) NOT NULL ," +
-                " type_id INT NOT NULL ," +
+                " type INT NOT NULL ," +
                 " x REAL NOT NULL ," +
                 " y REAL NOT NULL ," +
                 " z REAL NOT NULL ," +
-                " FOREIGN KEY(solarsystem_id) REFERENCES solarSystem(id))";
+                " FOREIGN KEY(solarSystem_id) REFERENCES solarSystem(id))";
 
         stmt.executeUpdate(stargates);
         stmt.close();
@@ -135,16 +133,16 @@ public class SQLiteController {
         System.out.println("[SQLite] [Constellation] Inserted: " + id + " " + name);
     }
 
-    public void addSolarSystem(int id, int constellationId, int sovereignty, String name, long securityStatus, String securityClass, long x, long y, long z) throws Exception {
+    public void addSolarSystem(int id, int constellationId, int sovereignty, String name, long securityStatus, long x, long y, long z) throws Exception {
         PreparedStatement stmt = this.con.prepareStatement(
-                "INSERT INTO solarsystem (id, constellation_id, sovereignty, name, securitystatus, securityclass, x, y, z) VALUES(?,?,?,?,?,?,?,?,?)");
+                "INSERT INTO solarsystem (id, constellation_id, sovereignty, name, securitystatus, x, y, z) VALUES(?,?,?,?,?,?,?,?)");
 
         stmt.setInt(1, id);
         stmt.setInt(2, constellationId);
         stmt.setInt(3, sovereignty);
-        stmt.setString(4, name);
-        stmt.setLong(5, securityStatus);
-        stmt.setString(6, securityClass);
+        stmt.
+        stmt.setString(5, name);
+        stmt.setLong(6, securityStatus);
         stmt.setLong(7, x);
         stmt.setLong(8, y);
         stmt.setLong(9, z);
