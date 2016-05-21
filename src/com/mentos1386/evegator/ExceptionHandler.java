@@ -4,6 +4,7 @@ public class ExceptionHandler {
 
     public ExceptionHandler(Exception e) {
 
+        e.printStackTrace();
         System.out.println("[ERROR] " + e.getMessage());
     }
 }
