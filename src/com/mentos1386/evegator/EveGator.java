@@ -11,6 +11,7 @@ public class EveGator {
 
     // Create new Database Controller
     public static SQLiteController SQLite = new SQLiteController();
+    public static DataController dataCon = new DataController();
 
     public static void main(String[] args) {
 
@@ -23,14 +24,7 @@ public class EveGator {
             System.exit(1);
         }
 
-        ViewInterface view = new Authentication();
-
-        if (SQLite.fresh()) {
-            view = new LoadingData();
-        }
-
-        InterfaceController.run(view);
-
+        InterfaceController.run(new LoadingData());
 
         try {
             // Close connection

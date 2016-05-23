@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.mentos1386.evegator.Controllers.AuthController;
 import com.mentos1386.evegator.Endpoint;
 import com.mentos1386.evegator.Controllers.InterfaceController;
-import com.mentos1386.evegator.EveGator;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
 import com.mentos1386.evegator.Models.AuthObject;
 import javafx.geometry.Pos;
@@ -20,11 +19,16 @@ public class Welcome implements ViewInterface {
         AuthObject AUTH = AuthController.getAuth();
 
         Button location = new Button("Get location");
+        Button main = new Button("Main App");
 
-        // Authenticate user and save data to AuthController
         location.setOnAction(e -> {
             // Show Location
             InterfaceController.setScene(new Location().build());
+        });
+
+        main.setOnAction(e -> {
+            // Show Main
+            InterfaceController.setScene(new Main().build());
         });
 
         Label accessToken = new Label("Access Token: " + AUTH.ACCESS_TOKEN);
@@ -38,7 +42,7 @@ public class Welcome implements ViewInterface {
         Label welcome = new Label("Welcome " + name);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(welcome, accessToken, refreshToken, expires, location);
+        layout.getChildren().addAll(welcome, accessToken, refreshToken, expires, location, main);
         layout.setAlignment(Pos.CENTER);
 
         return layout;

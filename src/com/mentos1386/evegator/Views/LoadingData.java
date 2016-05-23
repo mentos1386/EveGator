@@ -1,112 +1,116 @@
 package com.mentos1386.evegator.Views;
 
-import com.mentos1386.evegator.Controllers.DataController;
-import com.mentos1386.evegator.Controllers.DataThreads.Constellation;
-import com.mentos1386.evegator.Controllers.DataThreads.Region;
-import com.mentos1386.evegator.Controllers.DataThreads.SolarSystem;
+import com.mentos1386.evegator.Controllers.DataTask;
+import com.mentos1386.evegator.Controllers.InterfaceController;
+import com.mentos1386.evegator.EveGator;
+import com.mentos1386.evegator.ExceptionHandler;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
-import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
+import java.sql.SQLException;
+
 public class LoadingData implements ViewInterface {
 
     public Pane build() {
-
-        Task<Void> regionUpdate = new Task<Void>() {
+        DataTask<Void> regionsLoadingUpdate = new DataTask<Void>() {
             @Override
             public Void call() {
-                Region region = new Region();
-
-                Thread regionThread = new Thread(region);
-                regionThread.setDaemon(true);
-                regionThread.start();
-
-                while (true) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException exc) {
-                        Thread.interrupted();
-                        break;
-                    }
-                    System.out.println("[LOAD] Region " + DataController.regionsLoaded + "/" + DataController.allRegions);
-                    updateProgress(DataController.regionsLoaded, DataController.allRegions);
+                // Get Regions
+                try {
+                    EveGator.dataCon.getRegions(this);
+                } catch (Exception e) {
+                    new ExceptionHandler(e);
                 }
                 return null;
             }
         };
-        Task<Void> constellationUpdate = new Task<Void>() {
+        DataTask<Void> constellationsLoadingUpdate = new DataTask<Void>() {
             @Override
             public Void call() {
-                Constellation constellation = new Constellation();
-
-                Thread constellationThread = new Thread(constellation);
-                constellationThread.setDaemon(true);
-                constellationThread.start();
-
-                while (!Thread.currentThread().isInterrupted()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException exc) {
-                        Thread.interrupted();
-                        break;
-                    }
-                    System.out.println("[LOAD] Constellation " + DataController.constellationsLoaded + "/" + DataController.allConstellations);
-                    updateProgress(DataController.constellationsLoaded, DataController.allConstellations);
+                // Get Regions
+                try {
+                    EveGator.dataCon.getConstellations(this);
+                } catch (SQLException e) {
+                    new ExceptionHandler(e);
                 }
                 return null;
             }
         };
-        Task<Void> solarSystemUpdate = new Task<Void>() {
+        DataTask<Void> solarSystemsLoadingUpdate = new DataTask<Void>() {
             @Override
             public Void call() {
-                SolarSystem solarSystem = new SolarSystem();
-
-                Thread solarSystemThread = new Thread(solarSystem);
-                solarSystemThread.setDaemon(true);
-                solarSystemThread.start();
-
-                while (!Thread.currentThread().isInterrupted()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException exc) {
-                        Thread.interrupted();
-                        break;
-                    }
-                    updateProgress(DataController.solarSystemsLoaded, DataController.allSolarSystems);
+                // Get Solar Systems
+                try {
+                    EveGator.dataCon.getSolarsystems(this);
+                } catch (SQLException e) {
+                    new ExceptionHandler(e);
+                }
+                return null;
+            }
+        };
+        DataTask<Void> stargatesLoadingUpdate = new DataTask<Void>() {
+            @Override
+            public Void call() {
+                // Get Stargates
+                try {
+                    EveGator.dataCon.getStargates(this);
+                } catch (SQLException e) {
+                    new ExceptionHandler(e);
                 }
                 return null;
             }
         };
 
-        ProgressBar regionProgress = new ProgressBar();
-        regionProgress.progressProperty().bind(regionUpdate.progressProperty());
+        ProgressBar RegionsLoadingProgress = new ProgressBar();
+        RegionsLoadingProgress.progressProperty().bind(regionsLoadingUpdate.progressProperty());
+        ProgressBar ConstellationsLoadingProgress = new ProgressBar();
+        ConstellationsLoadingProgress.progressProperty().bind(constellationsLoadingUpdate.progressProperty());
+        ProgressBar SolarSystemsLoadingProgress = new ProgressBar();
+        SolarSystemsLoadingProgress.progressProperty().bind(solarSystemsLoadingUpdate.progressProperty());
+        ProgressBar StargatesLoadingProgress = new ProgressBar();
+        StargatesLoadingProgress.progressProperty().bind(stargatesLoadingUpdate.progressProperty());
 
-        ProgressBar constellationProgress = new ProgressBar();
-        constellationProgress.progressProperty().bind(constellationUpdate.progressProperty());
+        // When regions finish, start constellations
+        regionsLoadingUpdate.setOnSucceeded(event -> {
+            System.out.println("[DataLoad] Constellations STARTED");
+            Thread ct = new Thread(constellationsLoadingUpdate);
+            ct.setDaemon(true);
+            ct.start();
+        });
+        // When constellations finish, start solarSystems
+        constellationsLoadingUpdate.setOnSucceeded(event -> {
+            System.out.println("[DataLoad] SolarSystems STARTED");
+            Thread st = new Thread(solarSystemsLoadingUpdate);
+            st.setDaemon(true);
+            st.start();
+        });
+        // When solarSystems finish, start stargates
+        solarSystemsLoadingUpdate.setOnSucceeded(event -> {
+            System.out.println("[DataLoad] Stargates STARTED");
+            Thread st = new Thread(stargatesLoadingUpdate);
+            st.setDaemon(true);
+            st.start();
+        });
+        // When stargattes finish, switch to new view
+        stargatesLoadingUpdate.setOnSucceeded(event -> {
+            System.out.println("[DataLoad] ALL FINISHED");
+            InterfaceController.setScene(new Authentication().build());
+        });
 
-        ProgressBar solarSystemProgress = new ProgressBar();
-        solarSystemProgress.progressProperty().bind(solarSystemUpdate.progressProperty());
-
-        Thread rt = new Thread(regionUpdate);
+        // Start regions
+        System.out.println("[DataLoad] Regions STARTED");
+        Thread rt = new Thread(regionsLoadingUpdate);
         rt.setDaemon(true);
         rt.start();
-
-        Thread ct = new Thread(constellationUpdate);
-        ct.setDaemon(true);
-        ct.start();
-
-        Thread st = new Thread(solarSystemUpdate);
-        st.setDaemon(true);
-        st.start();
 
         Label loading = new Label("Loading data... Please wait, this can take a while.");
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(loading, regionProgress, constellationProgress, solarSystemProgress);
+        layout.getChildren().addAll(loading, RegionsLoadingProgress, ConstellationsLoadingProgress, SolarSystemsLoadingProgress, StargatesLoadingProgress);
         layout.setAlignment(Pos.CENTER);
 
         return layout;

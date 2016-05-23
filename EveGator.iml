@@ -12,5 +12,6 @@
     <orderEntry type="library" name="com.google.code.gson:gson:2.6.2" level="project" />
     <orderEntry type="library" name="org.asynchttpclient:async-http-client:2.0.0-alpha23" level="project" />
     <orderEntry type="library" name="org.xerial:sqlite-jdbc:3.8.11.2" level="project" />
+    <orderEntry type="library" name="net.sf.jung:jung-api:2.1" level="project" />
   </component>
 </module>
