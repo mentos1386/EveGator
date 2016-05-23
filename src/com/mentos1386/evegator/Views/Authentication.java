@@ -19,8 +19,12 @@ public class Authentication implements ViewInterface{
         authenticateButton.setOnAction(e -> {
             // Authenticate
             AuthController.authenticate();
-            // Show Welcome
-            InterfaceController.setScene(new Welcome().build());
+
+            if(AuthController.getAuth() != null)
+            {
+                // Show Welcome
+                InterfaceController.setScene(new Welcome().build());
+            }
         });
 
         // Create layout

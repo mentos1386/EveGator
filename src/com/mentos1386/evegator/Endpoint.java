@@ -1,8 +1,8 @@
-package com.mentos1386.evegator.Controllers;
+package com.mentos1386.evegator;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mentos1386.evegator.ExceptionHandler;
+import com.mentos1386.evegator.Controllers.AuthController;
 import com.mentos1386.evegator.Interfaces.EndpointInterface;
 import com.mentos1386.evegator.Models.AuthObject;
 import org.asynchttpclient.AsyncHttpClient;
@@ -15,6 +15,7 @@ public class Endpoint implements EndpointInterface {
     private final String base = "https://crest-tq.eveonline.com/";
     private AuthObject AuthObject;
     private String uri;
+    private boolean auth = true;
 
     public Endpoint(String uri) {
 
@@ -22,13 +23,26 @@ public class Endpoint implements EndpointInterface {
         this.uri = uri;
     }
 
+    public Endpoint(String uri, boolean auth) {
+        this.AuthObject = AuthController.getAuth();
+        this.uri = uri;
+        this.auth = auth;
+    }
+
     private RequestBuilder request(String method) {
 
-        // Create request builder with necessary headers
-        RequestBuilder builder = new RequestBuilder(method);
-        return builder.setUrl(this.base + this.uri)
-                .addHeader("Authorization", "Bearer " + this.AuthObject.ACCESS_TOKEN)
-                .addHeader("User-Agent", "EveGator");
+        if (this.auth) {
+            // Create request builder with necessary headers
+            RequestBuilder builder = new RequestBuilder(method);
+            return builder.setUrl(this.base + this.uri)
+                    .addHeader("Authorization", "Bearer " + this.AuthObject.ACCESS_TOKEN)
+                    .addHeader("User-Agent", "EveGator");
+        } else {
+            // Create request builder with necessary headers
+            RequestBuilder builder = new RequestBuilder(method);
+            return builder.setUrl(this.base + this.uri)
+                    .addHeader("User-Agent", "EveGator");
+        }
     }
 
     /*
@@ -41,6 +55,7 @@ public class Endpoint implements EndpointInterface {
         // Try to make request
         try {
             response = asyncHttpClient.executeRequest(request).get().getResponseBody();
+            asyncHttpClient.close();
         } catch (Exception e) {
             new ExceptionHandler(e);
         }
