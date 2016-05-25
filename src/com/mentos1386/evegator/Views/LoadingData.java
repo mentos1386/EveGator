@@ -1,7 +1,6 @@
 package com.mentos1386.evegator.Views;
 
 import com.mentos1386.evegator.Controllers.DataTask;
-import com.mentos1386.evegator.Controllers.GraphBuilder;
 import com.mentos1386.evegator.Controllers.InterfaceController;
 import com.mentos1386.evegator.EveGator;
 import com.mentos1386.evegator.ExceptionHandler;
@@ -99,7 +98,7 @@ public class LoadingData implements ViewInterface {
         // When stargattes finish, switch to new view
         stargatesLoadingUpdate.setOnSucceeded(event -> {
             System.out.println("[DataLoad] ALL FINISHED");
-            InterfaceController.setScene(new Main().build());
+            InterfaceController.setScene(new Authentication().build());
         });
 
         // Start regions

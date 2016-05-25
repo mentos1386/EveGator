@@ -3,6 +3,7 @@ package com.mentos1386.evegator.Controllers;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.util.HashMap;
@@ -20,6 +21,28 @@ public class InterfaceController extends Application {
 
         stage.setTitle(title);
         stage.setScene(view.build());
+
+        stage.show();
+    }
+
+    public static void newStageAndWait(Scene scene, String title, String name) {
+        Stage stage = new Stage();
+        stages.put(name, stage);
+
+        stage.initModality(Modality.APPLICATION_MODAL);
+
+        stage.setTitle(title);
+        stage.setScene(scene);
+
+        stage.showAndWait();
+    }
+
+    public static void newStage(Scene scene, String title, String name) {
+        Stage stage = new Stage();
+        stages.put(name, stage);
+
+        stage.setTitle(title);
+        stage.setScene(scene);
 
         stage.show();
     }

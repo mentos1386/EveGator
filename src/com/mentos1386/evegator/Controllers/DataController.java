@@ -69,8 +69,8 @@ public class DataController {
         Statement stmt = this.sqlite.getCon().createStatement();
         ResultSet rs = stmt.executeQuery(
                 "SELECT" +
-                        " constellationName," +
                         " constellationID," +
+                        " constellationName," +
                         " regionID" +
                         " FROM  mapConstellations");
         stmt = this.sqlite.getCon().createStatement();

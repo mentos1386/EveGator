@@ -4,11 +4,9 @@ import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SolarSystemObject {
+public class SolarSystemObject extends Object {
 
     // Solar system info
-    private int id;
-    private String name;
     private String securityClass;
     private double security;
 
@@ -43,14 +41,6 @@ public class SolarSystemObject {
         this.constellation = constellation;
         this.region = region;
         this.location = location;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public String getSecurityClass() {
