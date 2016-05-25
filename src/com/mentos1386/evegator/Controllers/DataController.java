@@ -6,6 +6,7 @@ import com.mentos1386.evegator.Models.RegionObject;
 import com.mentos1386.evegator.Models.SolarSystemObject;
 import com.mentos1386.evegator.Models.StargateObject;
 
+import java.awt.geom.Point2D;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -102,7 +103,9 @@ public class DataController {
                         " regionID," +
                         " constellationID," +
                         " securityClass," +
-                        " security" +
+                        " security," +
+                        " x," +
+                        " y" +
                         " FROM  mapSolarSystems");
         stmt = this.sqlite.getCon().createStatement();
         ResultSet rows = stmt.executeQuery(
@@ -121,7 +124,8 @@ public class DataController {
                     regions.get(rs.getInt(3)),
                     constellations.get(rs.getInt(4)),
                     rs.getString(5),
-                    rs.getDouble(6));
+                    rs.getDouble(6),
+                    new Point2D.Double(rs.getDouble(7), rs.getDouble(8)));
 
             solarSystems.put(ss.getId(), ss);
         }

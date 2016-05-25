@@ -2,149 +2,114 @@ package com.mentos1386.evegator.Controllers;
 
 import com.mentos1386.evegator.EveGator;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
-import com.mentos1386.evegator.Models.RegionObject;
 import com.mentos1386.evegator.Models.SolarSystemObject;
 import com.mentos1386.evegator.Models.StargateObject;
-import edu.uci.ics.jung.algorithms.layout.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.ISOMLayout;
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.UndirectedSparseMultigraph;
-import edu.uci.ics.jung.graph.util.Pair;
-import edu.uci.ics.jung.visualization.DefaultVisualizationModel;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
-import java.awt.*;
 import java.awt.geom.Point2D;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class GraphBuilder implements ViewInterface {
 
-    final int LITERATIONS = 7000;
-    public boolean wasInit = false;
-    public boolean wasUpdating = false;
-    public boolean done;
+    static Map<Integer, SolarSystemObject> solarsystems = new HashMap<>();
+    static Map<SolarSystemObject, StargateObject> stargates = new HashMap<>();
     ISOMLayout<SolarSystemObject, StargateObject> layout;
     Graph<SolarSystemObject, StargateObject> graph;
+    private Group map;
+    private ZoomableScrollPane zsp;
 
-    public Scene build() {
-        // setup up the scene.
-        Group root = new Group();
-        VBox zsp = new VBox(root);
-        Group viz = new Group();
+    public void init() {
 
-        layout.lock(true);
-        renderGraph(viz);
-        layout.lock(false);
-
-        root.getChildren().add(viz);
-
-        return new Scene(zsp);
-    }
-
-    public void init(RegionObject region) {
-
-        this.wasInit = true;
-
-        this.graph = new UndirectedSparseMultigraph<>();
+        VBox root = new VBox(10);
+        this.zsp = new ZoomableScrollPane(root);
+        this.map = new Group();
 
         EveGator.dataCon.solarSystems().values().forEach((solarSystem) -> {
             // Remove solarsystems without stargates (wormhole space)
-            if (solarSystem.getRegion() != null) {
-                if (solarSystem.getRegion().getId() == region.getId()) {
-                    graph.addVertex(solarSystem);
-                }
+            if (solarSystem.getStargates() != null) {
+                renderSolarSystem(solarSystem);
+                solarsystems.put(solarSystem.getId(), solarSystem);
             }
 
         });
 
         for (SolarSystemObject ss : EveGator.dataCon.solarSystems().values()) {
             for (StargateObject sg : ss.getStargates().values()) {
-                if (ss.getRegion() != null || sg.getFromRegion() != null) {
-                    if (ss.getRegion().getId() == region.getId() || sg.getToRegion().getId() == region.getId()) {
-                        graph.addEdge(sg, ss, sg.getToSolarSystem());
-                    }
-                }
+                renderPath(sg);
+                stargates.put(sg.getFromSolarSystem(), sg);
             }
         }
 
-        System.out.println("[GraphLoad] Edge loaded: " + graph.getEdgeCount());
-        System.out.println("[GraphLoad] Vertex loaded: " + graph.getVertexCount());
+        System.out.println("[GraphLoad] Edge loaded: " + solarsystems.size());
+        System.out.println("[GraphLoad] Vertex loaded: " + stargates.size());
 
-        // define the layout we want to use for the graph
-        // The layout will be modified by the VisualizationModel
-        this.layout = new ISOMLayout<SolarSystemObject, StargateObject>(graph);
-        new DefaultVisualizationModel<SolarSystemObject, StargateObject>(layout, new Dimension(900, 900));
+        root.getChildren().add(this.map);
     }
 
-    // For big graphs
-    //public void update(DataTask updateTask) {
-    //    this.wasUpdating = true;
-    //    this.layout.setMaxIterations(this.LITERATIONS);
-    //    for(int i = 1; i <= this.LITERATIONS; i++) {
-    //        this.layout.step();
-    //        System.out.println("[GraphLoad] " + i + "/" + this.LITERATIONS);
-    //        updateTask.updateDataLoading(i, this.LITERATIONS);
-    //    }
-    //    this.done = true;
-    //}
 
-    private void renderGraph(Group viz) {
-        // draw the vertices in the graph
-        for (SolarSystemObject v : this.graph.getVertices()) {
+    private void renderSolarSystem(SolarSystemObject ss) {
 
-            // draw the vertex as a circle
-            Circle circle = new Circle(this.layout.getX(v), this.layout.getY(v), 5);
+        // draw the vertex as a circle
+        Circle circle = new Circle(ss.getLocation().getX(), ss.getLocation().getY(), 5);
+        circle.setFill(Paint.valueOf(this.color(ss.getSecurity())));
 
-            // add it to the group, so it is shown on screen
-            viz.getChildren().add(circle);
+        // add it to the group, so it is shown on screen
+        this.map.getChildren().add(circle);
+    }
+
+    private void renderPath(StargateObject ss) {
+        Point2D pStart = ss.getFromSolarSystem().getLocation();
+        Point2D pEnd = ss.getToSolarSystem().getLocation();
+
+        // Draw the line
+        Line line = new Line(pStart.getX(), pStart.getY(), pEnd.getX(), pEnd.getY());
+
+        Double sec = ss.getToSolarSystem().getSecurity();
+        line.setStroke(Paint.valueOf(this.color(sec)));
+
+        // add the edges to the screen
+        map.getChildren().add(line);
+    }
+
+    private String color(double sec) {
+        String color;
+        if (sec >= 1.0) {
+            color = "#2FEFEF";
+        } else if (sec >= 0.9) {
+            color = "#48F0C0";
+        } else if (sec >= 0.8) {
+            color = "#00EF47";
+        } else if (sec >= 0.7) {
+            color = "#00F000";
+        } else if (sec >= 0.6) {
+            color = "#8FEF2F";
+        } else if (sec >= 0.5) {
+            color = "#EFEF00";
+        } else if (sec >= 0.4) {
+            color = "#D77700";
+        } else if (sec >= 0.3) {
+            color = "#F06000";
+        } else if (sec >= 0.2) {
+            color = "#F04800";
+        } else if (sec >= 0.1) {
+            color = "#D73000";
+        } else {
+            color = "#F00000";
         }
+        return color;
+    }
 
-        // draw the edges
-        for (StargateObject n : this.graph.getEdges()) {
-            // get the end points of the edge
-            Pair<SolarSystemObject> endpoints = this.graph.getEndpoints(n);
-
-            // Get the end points as Point2D objects so we can use them in the
-            // builder
-            Point2D pStart = layout.apply(endpoints.getFirst());
-            Point2D pEnd = layout.apply(endpoints.getSecond());
-
-            // Draw the line
-            Line line = new Line(pStart.getX(), pStart.getY(), pEnd.getX(), pEnd.getY());
-            String color;
-            Double sec = endpoints.getFirst().getSecurity();
-            if (sec >= 1.0) {
-                color = "#2FEFEF";
-            } else if (sec >= 0.9) {
-                color = "#48F0C0";
-            } else if (sec >= 0.8) {
-                color = "#00EF47";
-            } else if (sec >= 0.7) {
-                color = "#00F000";
-            } else if (sec >= 0.6) {
-                color = "#8FEF2F";
-            } else if (sec >= 0.5) {
-                color = "#EFEF00";
-            } else if (sec >= 0.4) {
-                color = "#D77700";
-            } else if (sec >= 0.3) {
-                color = "#F06000";
-            } else if (sec >= 0.2) {
-                color = "#F04800";
-            } else if (sec >= 0.1) {
-                color = "#D73000";
-            } else {
-                color = "#F00000";
-            }
-
-            line.setStroke(javafx.scene.paint.Paint.valueOf(color));
-
-            // add the edges to the screen
-            viz.getChildren().add(line);
-        }
+    @Override
+    public Scene build() {
+        return new Scene(this.zsp);
     }
 }

@@ -1,5 +1,7 @@
 package com.mentos1386.evegator.Models;
 
+import java.awt.geom.Point2D;
+
 public class StargateObject {
 
     private RegionObject fromRegion;
@@ -52,8 +54,7 @@ public class StargateObject {
         return toSolarSystem;
     }
 
-    public String toString()
-    {
+    public String toString() {
         return "From: " + this.fromSolarSystem.getName() +
                 " To: " + this.toSolarSystem.getName();
     }

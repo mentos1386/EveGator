@@ -1,5 +1,6 @@
 package com.mentos1386.evegator.Models;
 
+import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +11,13 @@ public class SolarSystemObject {
     private String name;
     private String securityClass;
     private double security;
+
+    public Point2D getLocation() {
+        return location;
+    }
+
+    private Point2D location;
+
 
     // Stargates
 
@@ -26,13 +34,15 @@ public class SolarSystemObject {
                              RegionObject region,
                              ConstellationObject constellation,
                              String securityClass,
-                             double security) {
+                             double security,
+                             Point2D location) {
         this.id = id;
         this.name = name;
         this.securityClass = securityClass;
         this.security = security;
         this.constellation = constellation;
         this.region = region;
+        this.location = location;
     }
 
     public int getId() {
