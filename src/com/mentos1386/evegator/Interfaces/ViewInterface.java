@@ -1,8 +1,8 @@
 package com.mentos1386.evegator.Interfaces;
 
-import javafx.scene.layout.Pane;
+import javafx.scene.Scene;
 
 public interface ViewInterface {
 
-    Pane build();
+    Scene build();
 }

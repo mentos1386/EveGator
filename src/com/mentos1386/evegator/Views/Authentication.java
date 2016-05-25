@@ -4,13 +4,14 @@ import com.mentos1386.evegator.Controllers.AuthController;
 import com.mentos1386.evegator.Controllers.InterfaceController;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
 public class Authentication implements ViewInterface{
 
-    public Pane build()
+    public Scene build()
     {
         // Create button
         Button authenticateButton = new Button("Authenticate");
@@ -33,6 +34,6 @@ public class Authentication implements ViewInterface{
         layout.setAlignment(Pos.CENTER);
 
         // Return Layout
-        return layout;
+        return new Scene(layout);
     }
 }

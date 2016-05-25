@@ -1,21 +1,22 @@
 package com.mentos1386.evegator.Views;
 
 import com.mentos1386.evegator.Controllers.DataTask;
+import com.mentos1386.evegator.Controllers.GraphBuilder;
 import com.mentos1386.evegator.Controllers.InterfaceController;
 import com.mentos1386.evegator.EveGator;
 import com.mentos1386.evegator.ExceptionHandler;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
 import java.sql.SQLException;
 
 public class LoadingData implements ViewInterface {
 
-    public Pane build() {
+    public Scene build() {
         DataTask<Void> regionsLoadingUpdate = new DataTask<Void>() {
             @Override
             public Void call() {
@@ -98,7 +99,7 @@ public class LoadingData implements ViewInterface {
         // When stargattes finish, switch to new view
         stargatesLoadingUpdate.setOnSucceeded(event -> {
             System.out.println("[DataLoad] ALL FINISHED");
-            InterfaceController.setScene(new Authentication().build());
+            InterfaceController.setScene(new Main().build());
         });
 
         // Start regions
@@ -113,6 +114,6 @@ public class LoadingData implements ViewInterface {
         layout.getChildren().addAll(loading, RegionsLoadingProgress, ConstellationsLoadingProgress, SolarSystemsLoadingProgress, StargatesLoadingProgress);
         layout.setAlignment(Pos.CENTER);
 
-        return layout;
+        return new Scene(layout);
     }
 }

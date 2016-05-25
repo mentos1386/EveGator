@@ -23,12 +23,12 @@ import java.util.Random;
 
 public class AuthController {
 
-    private static String OAUTH_URL = "https://login.eveonline.com/oauth/authorize";
-    private static String TOKEN_URL = "https://login-tq.eveonline.com/oauth/token/";
-    private static String OWNER_DETAILS_URL = "https://login.eveonline.com/oauth/verify";
-    private static String REDIRECT_URL = "http://localhost/729971297/";
-    private static String CLIENT_KEY = "8e763e5cb9234108bc921eaec291c020";
-    private static String CLIENT_SECRET = "Pn5O9c3MViiu6DOUKpvTfu5zN17LRuIXSZao4jf5";
+    private static final String OAUTH_URL = "https://login.eveonline.com/oauth/authorize";
+    private static final String TOKEN_URL = "https://login-tq.eveonline.com/oauth/token/";
+    private static final String OWNER_DETAILS_URL = "https://login.eveonline.com/oauth/verify";
+    private static final String REDIRECT_URL = "http://localhost/729971297/";
+    private static final String CLIENT_KEY = "8e763e5cb9234108bc921eaec291c020";
+    private static final String CLIENT_SECRET = "Pn5O9c3MViiu6DOUKpvTfu5zN17LRuIXSZao4jf5";
     private static String STATE;
     private static AuthObject AUTH_OBECT;
     private static String[] SCOPES = {

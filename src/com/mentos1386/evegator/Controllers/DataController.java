@@ -6,27 +6,42 @@ import com.mentos1386.evegator.Models.RegionObject;
 import com.mentos1386.evegator.Models.SolarSystemObject;
 import com.mentos1386.evegator.Models.StargateObject;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
 public class DataController {
 
-    public Map<Integer, SolarSystemObject> solarSystems =
+    private Map<Integer, SolarSystemObject> solarSystems =
             new HashMap<Integer, SolarSystemObject>();
-    public Map<Integer, RegionObject> regions =
+    private Map<Integer, RegionObject> regions =
             new HashMap<Integer, RegionObject>();
-    public Map<Integer, ConstellationObject> constellations =
+
+    public Map<Integer, SolarSystemObject> solarSystems() {
+        return solarSystems;
+    }
+
+    public Map<Integer, RegionObject> regions() {
+        return regions;
+    }
+
+    public Map<Integer, ConstellationObject> constellations() {
+        return constellations;
+    }
+
+    private Map<Integer, ConstellationObject> constellations =
             new HashMap<Integer, ConstellationObject>();
 
     private SQLiteController sqlite = EveGator.SQLite;
 
-    public void getRegions(DataTask task) throws SQLException{
+    public void getRegions(DataTask task) throws SQLException {
         Statement stmt = this.sqlite.getCon().createStatement();
         ResultSet rs = stmt.executeQuery(
                 "SELECT" +
-                        " regionName," +
-                        " regionID" +
+                        " regionID," +
+                        " regionName" +
                         " FROM  mapRegions");
         stmt = this.sqlite.getCon().createStatement();
         ResultSet rows = stmt.executeQuery(
@@ -36,8 +51,6 @@ public class DataController {
 
 
         while (rs.next()) {
-            System.out.println("[DataLoad] Process " + rs.getRow() + "/" + rows.getInt(1));
-
             // Update progress
             task.updateDataLoading(rs.getRow(), rows.getInt(1));
 
@@ -51,7 +64,7 @@ public class DataController {
         rs.close();
     }
 
-    public void getConstellations(DataTask task) throws SQLException{
+    public void getConstellations(DataTask task) throws SQLException {
         Statement stmt = this.sqlite.getCon().createStatement();
         ResultSet rs = stmt.executeQuery(
                 "SELECT" +
@@ -66,8 +79,6 @@ public class DataController {
                         " FROM  mapConstellations LIMIT 1");
 
         while (rs.next()) {
-            System.out.println("[DataLoad] Process " + rs.getRow() + "/" + rows.getInt(1));
-
             // Update progress
             task.updateDataLoading(rs.getRow(), rows.getInt(1));
 
@@ -100,8 +111,6 @@ public class DataController {
                         " FROM  mapSolarSystems LIMIT 1");
 
         while (rs.next()) {
-            System.out.println("[DataLoad] Process " + rs.getRow() + "/" + rows.getInt(1));
-
             // Update progress
             task.updateDataLoading(rs.getRow(), rows.getInt(1));
 
@@ -112,7 +121,7 @@ public class DataController {
                     regions.get(rs.getInt(3)),
                     constellations.get(rs.getInt(4)),
                     rs.getString(5),
-                    rs.getInt(6));
+                    rs.getDouble(6));
 
             solarSystems.put(ss.getId(), ss);
         }
@@ -137,8 +146,6 @@ public class DataController {
                         " FROM  mapSolarSystemJumps LIMIT 1");
 
         while (rs.next()) {
-            System.out.println("[DataLoad] Process " + rs.getRow() + "/" + rows.getInt(1));
-
             // Update progress
             task.updateDataLoading(rs.getRow(), rows.getInt(1));
 

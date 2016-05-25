@@ -7,6 +7,7 @@ import com.mentos1386.evegator.Controllers.InterfaceController;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
 import com.mentos1386.evegator.Models.AuthObject;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
@@ -14,7 +15,7 @@ import javafx.scene.layout.VBox;
 
 public class Location implements ViewInterface {
 
-    public Pane build() {
+    public Scene build() {
         AuthObject AUTH = AuthController.getAuth();
 
         Button welcome = new Button("Back to welcome");
@@ -52,6 +53,6 @@ public class Location implements ViewInterface {
         layout.getChildren().addAll(welcome, refresh, location);
         layout.setAlignment(Pos.CENTER);
 
-        return layout;
+        return new Scene(layout);
     }
 }

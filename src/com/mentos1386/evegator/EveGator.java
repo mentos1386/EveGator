@@ -3,8 +3,7 @@ package com.mentos1386.evegator;
 import com.mentos1386.evegator.Controllers.DataController;
 import com.mentos1386.evegator.Controllers.InterfaceController;
 import com.mentos1386.evegator.Controllers.SQLiteController;
-import com.mentos1386.evegator.Interfaces.ViewInterface;
-import com.mentos1386.evegator.Views.Authentication;
+import com.mentos1386.evegator.Controllers.GraphBuilder;
 import com.mentos1386.evegator.Views.LoadingData;
 
 public class EveGator {
@@ -12,6 +11,8 @@ public class EveGator {
     // Create new Database Controller
     public static SQLiteController SQLite = new SQLiteController();
     public static DataController dataCon = new DataController();
+    public static GraphBuilder gb = new GraphBuilder();
+
 
     public static void main(String[] args) {
 
@@ -24,7 +25,7 @@ public class EveGator {
             System.exit(1);
         }
 
-        InterfaceController.run(new LoadingData());
+        InterfaceController.run(new LoadingData(), "EVE Gator");
 
         try {
             // Close connection

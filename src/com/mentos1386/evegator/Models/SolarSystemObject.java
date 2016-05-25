@@ -9,7 +9,7 @@ public class SolarSystemObject {
     private int id;
     private String name;
     private String securityClass;
-    private float security;
+    private double security;
 
     // Stargates
 
@@ -26,7 +26,7 @@ public class SolarSystemObject {
                              RegionObject region,
                              ConstellationObject constellation,
                              String securityClass,
-                             float security) {
+                             double security) {
         this.id = id;
         this.name = name;
         this.securityClass = securityClass;
@@ -51,7 +51,7 @@ public class SolarSystemObject {
         return stargates;
     }
 
-    public float getSecurity() {
+    public double getSecurity() {
         return security;
     }
 
