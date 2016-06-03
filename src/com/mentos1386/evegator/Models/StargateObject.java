@@ -1,17 +1,15 @@
 package com.mentos1386.evegator.Models;
 
-import java.awt.geom.Point2D;
-
 public class StargateObject {
 
-    private RegionObject fromRegion;
-    private RegionObject toRegion;
+    private final RegionObject fromRegion;
+    private final RegionObject toRegion;
 
-    private ConstellationObject fromConstellation;
-    private ConstellationObject toConstellation;
+    private final ConstellationObject fromConstellation;
+    private final ConstellationObject toConstellation;
 
-    private SolarSystemObject fromSolarSystem;
-    private SolarSystemObject toSolarSystem;
+    private final SolarSystemObject fromSolarSystem;
+    private final SolarSystemObject toSolarSystem;
 
     public StargateObject(
             RegionObject fromRegion,

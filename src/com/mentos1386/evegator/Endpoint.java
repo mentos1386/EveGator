@@ -1,5 +1,6 @@
 package com.mentos1386.evegator;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mentos1386.evegator.Controllers.AuthController;
@@ -60,8 +61,15 @@ public class Endpoint implements EndpointInterface {
             new ExceptionHandler(e);
         }
 
+        JsonElement jsonResponse = new JsonParser().parse(response);
+
         // Return as JsonObject
-        return new JsonParser().parse(response).getAsJsonObject();
+        if(jsonResponse != null && response != null && !response.isEmpty())
+        {
+            return jsonResponse.getAsJsonObject();
+        } else {
+            return new JsonObject();
+        }
     }
 
     /*
@@ -80,12 +88,11 @@ public class Endpoint implements EndpointInterface {
     /*
     * POST Request
     */
-    @Override
-    public JsonObject post(JsonObject body) {
+    public JsonObject post(String body) {
 
         // Create request
         Request request = this.request("POST")
-                .setBody(body.getAsString())
+                .setBody(body)
                 .build();
 
         // Return response

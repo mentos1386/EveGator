@@ -1,26 +1,26 @@
 package com.mentos1386.evegator.Views;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mentos1386.evegator.Controllers.AuthController;
-import com.mentos1386.evegator.Controllers.GraphController;
+import com.mentos1386.evegator.Controllers.EdgeWeightController;
+import com.mentos1386.evegator.Controllers.PathController;
 import com.mentos1386.evegator.Endpoint;
 import com.mentos1386.evegator.EveGator;
 import com.mentos1386.evegator.ExceptionHandler;
 import com.mentos1386.evegator.Interfaces.ViewInterface;
 import com.mentos1386.evegator.Models.*;
 import edu.uci.ics.jung.algorithms.shortestpath.DijkstraShortestPath;
-import edu.uci.ics.jung.algorithms.shortestpath.UnweightedShortestPath;
 import edu.uci.ics.jung.graph.Graph;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -29,12 +29,13 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
 import java.util.List;
-import java.util.Map;
 
 public class Main implements ViewInterface {
 
     private final int HEIGHT = 800;
     private final int WIDTH = 1000;
+    private Graph<SolarSystemObject, StargateObject> graph;
+
     private RegionObject selectedRegion;
     private ConstellationObject selectedConstellation;
     private SolarSystemObject selectedSolarSystem;
@@ -42,11 +43,11 @@ public class Main implements ViewInterface {
     private ListView<ConstellationObject> constellationsList;
     private ListView<SolarSystemObject> solarSystemsList;
     private ListView<StargateObject> navigationList;
-    private ObservableList<StargateObject> stargates;
+    public static ObservableList<StargateObject> stargates;
     private ObservableList<ConstellationObject> constellations;
     private ObservableList<SolarSystemObject> solarSystems;
 
-    private UnweightedShortestPath<SolarSystemObject, StargateObject> dist;
+    private DijkstraShortestPath<SolarSystemObject, StargateObject> dist;
 
     private SolarSystemObject locationSolarSystem;
     private String locationStation = "Not in station";
@@ -60,7 +61,10 @@ public class Main implements ViewInterface {
     private Text locationSolarSystemText;
     private Text locationStationText;
     private Button refreshButton;
-    private Button navigateToButton;
+    private Button calculateButton;
+    private Button navigateButton;
+    private ChoiceBox<String> securityPenalty;
+    private CheckBox avoidence;
 
     public static String color(double sec) {
         String color;
@@ -97,8 +101,7 @@ public class Main implements ViewInterface {
         GridPane grid = new GridPane();
 
         this.getLocation();
-        Graph<SolarSystemObject, StargateObject> graph = new GraphController().init();
-        this.dist = new UnweightedShortestPath<>(graph);
+        this.graph = new PathController().init();
 
         ColumnConstraints cc1 = new ColumnConstraints(WIDTH / 4);
         ColumnConstraints cc2 = new ColumnConstraints(WIDTH / 4);
@@ -131,7 +134,8 @@ public class Main implements ViewInterface {
         this.navigationControllsButtons = new GridPane();
         this.navigationControlls.add(navigationControllsButtons, 0, 4);
 
-        this.navigationControllsButtons.addRow(0, refreshButton, navigateToButton);
+        this.navigationControllsButtons.addRow(0, refreshButton, calculateButton, navigateButton);
+        this.navigationControllsButtons.addRow(1, securityPenalty, avoidence);
 
         this.navigation.add(navigationList, 0, 1);
 
@@ -153,7 +157,21 @@ public class Main implements ViewInterface {
         this.regionsList.setItems(regions);
 
         this.regionsList.setOnMouseClicked(event -> {
-            this.selectedRegion = this.regionsList.getSelectionModel().getSelectedItem();
+            if (event.getButton().equals(MouseButton.PRIMARY)) {
+                this.selectedRegion = this.regionsList.getSelectionModel().getSelectedItem();
+
+            } else if (event.getButton().equals(MouseButton.SECONDARY)) {
+                RegionObject reg = this.regionsList.getSelectionModel().getSelectedItem();
+
+                if (PathController.avoidListRegions.contains(reg)) {
+                    PathController.avoidListRegions.remove(reg);
+                    System.out.println("Avoid remove region " + reg.getName());
+                } else {
+                    PathController.avoidListRegions.add(reg);
+                    System.out.println("Avoid add region " + reg.getName());
+                }
+                this.solarSystemsList.refresh();
+            }
             this.updateConstellations();
             this.updateSolarSystemsRegion();
         });
@@ -162,25 +180,94 @@ public class Main implements ViewInterface {
     }
 
     private void navigationInit() {
-        this.navigateToButton = new Button("Navigate");
-        this.navigateToButton.setOnAction(e -> {
+        this.calculateButton = new Button("Calculate");
+        this.calculateButton.setOnAction(e -> {
             try {
                 if (this.locationSolarSystem == null) {
                     throw new Exception("You have to be in game for location to work!");
                 } else if (this.selectedSolarSystem == null) {
                     throw new Exception("Please select destination first!");
+                } else {
+                    this.dist = new DijkstraShortestPath<>(this.graph, new EdgeWeightController(), false);
+                    List<StargateObject> d = dist.getPath(this.locationSolarSystem, this.selectedSolarSystem);
+                    System.out.println(d);
+                    this.stargates.clear();
+                    this.stargates.addAll(d);
                 }
-                //TODO: IMPLEMENT YOUR OWN ALGORITHM!!!!!!!!!!!!!!!!!!!!
-                Map<SolarSystemObject, Number> d = dist.getDistanceMap(this.locationSolarSystem);
-                System.out.println(d);
-                this.stargates.clear();
             } catch (Exception ex) {
                 new ExceptionHandler(ex);
             }
         });
 
-        this.stargates = FXCollections.observableArrayList();
-        this.navigationList = new ListView<>(this.stargates);
+        this.securityPenalty = new ChoiceBox<>();
+        this.securityPenalty.setItems(FXCollections.observableArrayList(
+                "Shorter", "Less Secure", "More Secure")
+        );
+        this.securityPenalty.setValue("More Secure");
+        this.securityPenalty.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+            PathController.modifier = newValue.intValue();
+        });
+
+        this.avoidence = new CheckBox();
+        this.avoidence.setText("Avoid enabled");
+        this.avoidence.setSelected(true);
+        this.avoidence.selectedProperty().addListener((ov, old_val, new_val) -> {
+            PathController.avoid = new_val;
+        });
+
+        this.navigateButton = new Button();
+        this.navigateButton.setText("Navigate");
+        this.navigateButton.setOnAction(e -> {
+            Thread sendToGame = new Thread() {
+                @Override
+                public void run() {
+                    AuthObject AUTH = AuthController.getAuth();
+
+                    String uri = "characters/" + AUTH.OWNER + "/navigation/waypoints/";
+
+                    int cnt = 0;
+                    for (StargateObject sg: Main.stargates) {
+
+                        int id = sg.getToSolarSystem().getId();
+                        String href = "https://crest-tq.eveonline.com/solarsystems/" + id + "/";
+
+                        boolean first = false;
+                        boolean clear = false;
+
+                        if(cnt == 0)
+                        {
+                            first = true;
+                            clear = true;
+                        }
+
+                        String data  = getWaypointString(id, href, first, clear);
+
+                        new Endpoint(uri).post(data);
+
+                        System.out.println(cnt +" " + first +" " + clear + " " + data);
+                        cnt ++;
+                    }
+                }
+
+                private String getWaypointString(int id, String href, boolean first, boolean clear)
+                {
+                    return "{" +
+                            "  \"clearOtherWaypoints\": "+ clear +"," +
+                            "  \"first\": "+ first +"," +
+                            "  \"solarSystem\": {" +
+                            "    \"href\": \""+ href +"\"," +
+                            "    \"id\": "+ id +"" +
+                            "  }" +
+                            "}";
+                }
+            };
+
+            sendToGame.start();
+        });
+
+
+        stargates = FXCollections.observableArrayList();
+        this.navigationList = new ListView<>(stargates);
         this.navigationList.setCellFactory(list -> new SecurityStatusStargates());
     }
 
@@ -254,7 +341,21 @@ public class Main implements ViewInterface {
         this.constellationsList.setItems(this.constellations);
 
         this.constellationsList.setOnMouseClicked(event -> {
-            this.selectedConstellation = this.constellationsList.getSelectionModel().getSelectedItem();
+            if (event.getButton().equals(MouseButton.PRIMARY)) {
+                this.selectedConstellation = this.constellationsList.getSelectionModel().getSelectedItem();
+
+            } else if (event.getButton().equals(MouseButton.SECONDARY)) {
+                ConstellationObject con = this.constellationsList.getSelectionModel().getSelectedItem();
+
+                if (PathController.avoidListConstellations.contains(con)) {
+                    PathController.avoidListConstellations.remove(con);
+                    System.out.println("Avoid remove constellation " + con.getName());
+                } else {
+                    PathController.avoidListConstellations.add(con);
+                    System.out.println("Avoid add constellation " + con.getName());
+                }
+                this.solarSystemsList.refresh();
+            }
             this.updateSolarSystemsConstellation();
         });
 
@@ -284,9 +385,24 @@ public class Main implements ViewInterface {
         this.solarSystemsList.setItems(this.solarSystems);
 
         this.solarSystemsList.setOnMouseClicked(event -> {
-            this.selectedSolarSystem = this.solarSystemsList.getSelectionModel().getSelectedItem();
-            this.destinationText.setText(this.selectedSolarSystem.getName());
-            this.destinationText.setFill(Paint.valueOf(color(this.selectedSolarSystem.getSecurity())));
+            if (!this.solarSystemsList.getSelectionModel().isEmpty()) {
+                SolarSystemObject ss = this.solarSystemsList.getSelectionModel().getSelectedItem();
+                if (event.getButton().equals(MouseButton.PRIMARY)) {
+                    this.selectedSolarSystem = ss;
+                    this.destinationText.setText(this.selectedSolarSystem.getName());
+                    this.destinationText.setFill(Paint.valueOf(color(this.selectedSolarSystem.getSecurity())));
+
+                } else if (event.getButton().equals(MouseButton.SECONDARY)) {
+                    if (PathController.avoidListSolarSystems.contains(ss)) {
+                        PathController.avoidListSolarSystems.remove(ss);
+                        System.out.println("Avoid remove solarSystem " + ss.getName());
+                    } else {
+                        PathController.avoidListSolarSystems.add(ss);
+                        System.out.println("Avoid add solarSystem " + ss.getName());
+                    }
+                    this.solarSystemsList.refresh();
+                }
+            }
         });
 
         this.solarSystemsList.setCellFactory(list -> new SecurityStatus());
@@ -323,6 +439,10 @@ public class Main implements ViewInterface {
         @Override
         public void updateItem(SolarSystemObject item, boolean empty) {
             super.updateItem(item, empty);
+
+            Paint fill = Color.LIGHTGRAY;
+            Background background = new Background(new BackgroundFill(fill, null, null));
+
             Rectangle rect = new Rectangle(15, 15);
             if (empty || item == null) {
                 setText(null);
@@ -331,7 +451,16 @@ public class Main implements ViewInterface {
                 rect.setFill(Color.web(Main.color(item.getSecurity())));
                 setGraphic(rect);
                 setText(item.getName());
+                if (PathController.avoidListSolarSystems.contains(item) ||
+                        PathController.avoidListConstellations.contains(item.getConstellation()) ||
+                        PathController.avoidListRegions.contains(item.getRegion())
+                        ) {
+                    fill = Paint.valueOf("#fdd835");
+                    background = new Background(new BackgroundFill(fill, null, null));
+                }
             }
+
+            setBackground(background);
         }
     }
 
@@ -346,7 +475,7 @@ public class Main implements ViewInterface {
             } else {
                 rect.setFill(Color.web(Main.color(item.getToSolarSystem().getSecurity())));
                 setGraphic(rect);
-                setText(item.getFromSolarSystem().getName() + " TO " + item.getToSolarSystem().getName());
+                setText(item.getToSolarSystem().getName());
             }
         }
     }

@@ -16,9 +16,6 @@ public class SolarSystemObject extends Object {
 
     private Point2D location;
 
-
-    // Stargates
-
     // Sargates   < toSolarSystemObject, StargateObject>
     private Map<SolarSystemObject, StargateObject> stargates =
             new HashMap<SolarSystemObject, StargateObject>();

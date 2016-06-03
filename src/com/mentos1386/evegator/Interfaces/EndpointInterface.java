@@ -8,7 +8,7 @@ public interface EndpointInterface {
     JsonObject get();
 
     // Send HTTP_POST to root
-    JsonObject post(JsonObject body);
+    JsonObject post(String body);
 
     // Send HTTP_DELETE on root
     void delete();

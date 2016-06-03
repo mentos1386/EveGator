@@ -4,4 +4,8 @@ Helper app for game Eve Online. It will allow to use advanced navigation/waypoin
 
 This app is being build as part of school assignment.
 
+
+# YOU NEED TO DOWNLOAD SQLITE DATABASE FROM [HERE](https://www.fuzzwork.co.uk/dump/sqlite-latest.sqlite.bz2) AND RENAME IT TO evegator.sqlite AND PUT IT IN ROOT DIRECTORY!!!
+
+
 ### [MIT License](https://github.com/mentos1386/EveGator/blob/master/LICENSE)
